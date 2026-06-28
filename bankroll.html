@@ -751,37 +751,32 @@ async function salvarAposta() {
   const obs = document.getElementById('f-obs').value.trim();
   if (!data || !valor || !odd) { alert('Preencha pelo menos data, valor e odd.'); return; }
   if (editingId) {
+    // Edição: apenas atualiza a aposta, sem mexer em movBanca
     const idx = state.apostas.findIndex(a => a.id === editingId);
     const old = state.apostas[idx];
-    if (old.resultado === 'ganhou') state.banca -= (old.valor * old.odd - old.valor);
-    else if (old.resultado === 'perdeu') state.banca += old.valor;
-    if (resultado === 'ganhou') state.banca += (valor * odd - valor);
-    else if (resultado === 'perdeu') state.banca -= valor;
     state.apostas[idx] = { ...old, data, tipo, desc, casa, esporte, valor, odd, resultado, obs };
   } else {
+    // Nova aposta: adiciona sem criar entrada em movBanca
     const id = Date.now();
     state.apostas.push({ id, data, tipo, desc, casa, esporte, valor, odd, resultado, obs });
-    if (resultado === 'ganhou') state.banca += (valor * odd - valor);
-    else if (resultado === 'perdeu') state.banca -= valor;
-    if (resultado !== 'pendente') {
-      const lucro = resultado === 'ganhou' ? (valor * odd - valor) : -valor;
-      state.movBanca.push({ id, data, tipo: 'aposta', desc: desc || 'Aposta', valor: lucro });
-    }
   }
+  // Banca sempre recalculada por calcBancaReal()
+  state.banca = calcBancaReal();
   await saveState();
   closeModal();
   renderApostas();
+  renderDashboard();
 }
 
 async function deletarAposta(id) {
   if (!confirm('Excluir esta aposta?')) return;
-  const a = state.apostas.find(x => x.id === id);
-  if (a.resultado === 'ganhou') state.banca -= (a.valor * a.odd - a.valor);
-  else if (a.resultado === 'perdeu') state.banca += a.valor;
   state.apostas = state.apostas.filter(x => x.id !== id);
+  // Remove entrada correspondente em movBanca se existir
   state.movBanca = state.movBanca.filter(x => x.id !== id);
+  state.banca = calcBancaReal();
   await saveState();
   renderApostas();
+  renderDashboard();
 }
 
 function editarAposta(id) { openModal(id); }
@@ -823,14 +818,38 @@ async function salvarMovBanca() {
 function renderBanca() {
   state.banca = calcBancaReal();
   document.getElementById('banca-display').textContent = fmtMoeda(state.banca);
-  const movs = [...state.movBanca].reverse();
   const tl = document.getElementById('banca-timeline');
-  if (!movs.length) {
+
+  // Movimentações manuais (banca inicial, depósitos, retiradas)
+  const movManuais = [...state.movBanca]
+    .filter(m => m.tipo !== 'aposta')
+    .sort((a,b) => b.id - a.id);
+
+  // Apostas encerradas como movimentações
+  const movApostas = [...state.apostas]
+    .filter(a => a.resultado !== 'pendente')
+    .sort((a,b) => a.data < b.data ? 1 : a.data > b.data ? -1 : b.id - a.id)
+    .map(a => ({
+      id: a.id,
+      data: a.data,
+      tipo: 'aposta',
+      desc: a.desc || 'Aposta',
+      valor: a.resultado === 'ganhou' ? parseFloat((a.valor * a.odd - a.valor).toFixed(2)) : -a.valor
+    }));
+
+  // Combina e ordena por data desc, manuais por id desc
+  const todos = [...movManuais, ...movApostas].sort((a,b) => {
+    if (a.data && b.data) return a.data < b.data ? 1 : a.data > b.data ? -1 : b.id - a.id;
+    return b.id - a.id;
+  });
+
+  if (!todos.length) {
     tl.innerHTML = `<div class="empty"><div class="empty-icon">💰</div><p>Nenhuma movimentação ainda.<br>Defina sua banca inicial para começar.</p></div>`;
     return;
   }
+
   const icons = { deposito:'⬆️', retirada:'⬇️', inicial:'🏦' };
-  tl.innerHTML = movs.map(m => {
+  tl.innerHTML = todos.map(m => {
     const isPos = m.valor >= 0;
     const icon = m.tipo === 'aposta' ? (isPos ? '✅' : '❌') : (icons[m.tipo] || '');
     return `<div class="timeline-item">
