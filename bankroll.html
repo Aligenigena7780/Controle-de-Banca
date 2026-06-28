@@ -374,6 +374,10 @@
       <label>Valor (R$)</label>
       <input type="number" id="banca-valor-input" min="0" step="0.01" placeholder="0,00">
     </div>
+    <div class="form-group" id="banca-data-group" style="margin-bottom:16px;">
+      <label>Data</label>
+      <input type="date" id="banca-data-input">
+    </div>
     <div class="form-group" style="margin-bottom:4px;">
       <label>Descrição (opcional)</label>
       <input type="text" id="banca-desc-input" placeholder="Ex: Bônus da casa">
@@ -588,10 +592,12 @@ function fmtData(d) {
 let chartBanca = null, chartTipo = null;
 
 function calcBancaReal() {
-  // Recalcula banca do zero a partir da inicial + movimentações manuais + apostas encerradas
+  // Banca inicial (já é o valor definido, não soma novamente pelo movBanca)
   let banca = state.bancaInicial;
-  const movManuais = state.movBanca.filter(m => m.tipo !== 'aposta');
+  // Só depósitos e retiradas manuais — ignora 'inicial' para não duplicar
+  const movManuais = state.movBanca.filter(m => m.tipo === 'deposito' || m.tipo === 'retirada');
   for (const m of movManuais) banca += m.valor;
+  // Apostas encerradas
   const enc = state.apostas.filter(a => a.resultado !== 'pendente');
   for (const a of enc) {
     if (a.resultado === 'ganhou') banca += (a.valor * a.odd) - a.valor;
@@ -794,6 +800,10 @@ function openBancaModal(tipo) {
   document.getElementById('modal-banca-title').textContent = titles[tipo];
   document.getElementById('banca-valor-input').value = tipo === 'inicial' ? (state.bancaInicial || '') : '';
   document.getElementById('banca-desc-input').value = '';
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('banca-data-input').value = today;
+  // Esconde campo de data para banca inicial (não faz sentido ter data)
+  document.getElementById('banca-data-group').style.display = tipo === 'inicial' ? 'none' : 'flex';
   document.getElementById('modal-banca').classList.add('open');
 }
 
@@ -802,21 +812,24 @@ function closeBancaModal() { document.getElementById('modal-banca').classList.re
 async function salvarMovBanca() {
   const valor = parseFloat(document.getElementById('banca-valor-input').value);
   const desc = document.getElementById('banca-desc-input').value.trim();
+  const dataInput = document.getElementById('banca-data-input').value;
+  const data = dataInput || new Date().toISOString().slice(0,10);
   if (!valor || valor <= 0) { alert('Informe um valor válido.'); return; }
-  const data = new Date().toISOString().slice(0,10);
   if (bancaModalTipo === 'inicial') {
-    state.bancaInicial = valor; state.banca = valor;
-    state.movBanca.unshift({ id: Date.now(), data, tipo: 'inicial', desc: 'Banca inicial', valor });
+    // Remove entradas antigas de 'inicial' para não duplicar
+    state.movBanca = state.movBanca.filter(m => m.tipo !== 'inicial');
+    state.bancaInicial = valor;
+    state.movBanca.unshift({ id: Date.now(), data: new Date().toISOString().slice(0,10), tipo: 'inicial', desc: 'Banca inicial', valor });
   } else if (bancaModalTipo === 'deposito') {
-    state.banca += valor;
     state.movBanca.push({ id: Date.now(), data, tipo: 'deposito', desc: desc || 'Depósito', valor });
   } else {
-    state.banca -= valor;
     state.movBanca.push({ id: Date.now(), data, tipo: 'retirada', desc: desc || 'Retirada', valor: -valor });
   }
+  state.banca = calcBancaReal();
   await saveState();
   closeBancaModal();
   renderBanca();
+  renderDashboard();
 }
 
 function renderBanca() {
