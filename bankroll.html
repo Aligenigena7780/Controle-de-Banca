@@ -329,7 +329,7 @@
 // ===================== CONFIG SUPABASE =====================
 let SUPA_URL = '';
 let SUPA_KEY = '';
-const TABLE = 'bankroll';
+const TABLE = 'Controle%20de%20Banca';
 const ROW_ID = 1;
 
 function supaHeaders() {
@@ -530,12 +530,12 @@ function renderDashboard() {
   document.getElementById('kpi-acerto').textContent = acerto.toFixed(0) + '%';
   document.getElementById('kpi-acerto-sub').textContent = `${ganhas.length} ganhas de ${enc.length}`;
   renderChartBanca(); renderChartTipo();
-  const recent = [...state.apostas].sort((a,b) => b.id - a.id).slice(0,5);
+  const recent = [...state.apostas].sort((a,b) => a.data < b.data ? 1 : a.data > b.data ? -1 : b.id - a.id).slice(0,5);
   document.getElementById('dash-table-wrap').innerHTML = renderTabelaApostas(recent, true);
 }
 
 function renderChartBanca() {
-  const sorted = [...state.apostas].sort((a,b) => a.id - b.id);
+  const sorted = [...state.apostas].filter(a => a.resultado !== 'pendente').sort((a,b) => a.data < b.data ? -1 : a.data > b.data ? 1 : a.id - b.id);
   const labels = ['Início'], valores = [state.bancaInicial];
   let banca = state.bancaInicial;
   for (const a of sorted) {
@@ -567,7 +567,7 @@ function renderChartTipo() {
 
 // ===================== APOSTAS =====================
 function renderApostas() {
-  let lista = [...state.apostas].sort((a,b) => b.id - a.id);
+  let lista = [...state.apostas].sort((a,b) => a.data < b.data ? 1 : a.data > b.data ? -1 : b.id - a.id);
   const fRes = document.getElementById('filter-resultado').value;
   const fTipo = document.getElementById('filter-tipo').value;
   const fCasa = document.getElementById('filter-casa').value;
