@@ -6,315 +6,119 @@
 <title>Bankroll</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap');
-
   :root {
-    --bg: #0e0f11;
-    --surface: #16181c;
-    --surface2: #1e2026;
-    --border: #2a2d35;
-    --green: #00e676;
-    --green-dim: #00e67620;
-    --red: #ff4d6d;
-    --red-dim: #ff4d6d20;
-    --yellow: #ffd166;
-    --yellow-dim: #ffd16620;
-    --text: #e8eaf0;
-    --text-muted: #6b7280;
-    --text-dim: #9ca3af;
-    --accent: #7c6fcd;
-    --accent-dim: #7c6fcd25;
-    --radius: 10px;
+    --bg:#0e0f11;--surface:#16181c;--surface2:#1e2026;--border:#2a2d35;
+    --green:#00e676;--green-dim:#00e67620;--red:#ff4d6d;--red-dim:#ff4d6d20;
+    --yellow:#ffd166;--yellow-dim:#ffd16620;--text:#e8eaf0;--text-muted:#6b7280;
+    --text-dim:#9ca3af;--accent:#7c6fcd;--accent-dim:#7c6fcd25;--radius:10px;
   }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
-  .app { display: flex; flex-direction: column; min-height: 100vh; }
-
-  header {
-    padding: 18px 28px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    background: var(--surface);
-    position: sticky; top: 0; z-index: 100;
-  }
-
-  .logo {
-    font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500;
-    letter-spacing: 0.04em; color: var(--text);
-    display: flex; align-items: center; gap: 10px;
-  }
-
-  .logo-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--green); box-shadow: 0 0 8px var(--green);
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-  .header-right { display: flex; align-items: center; gap: 12px; }
-
-  .sync-status {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 11px; color: var(--text-muted);
-    font-family: 'DM Mono', monospace;
-  }
-
-  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
-  .sync-dot.ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
-  .sync-dot.err { background: var(--red); }
-  .sync-dot.syncing { background: var(--yellow); animation: pulse 1s infinite; }
-
-  nav { display: flex; gap: 4px; }
-
-  .nav-btn {
-    padding: 7px 16px; border-radius: 6px; border: none;
-    background: transparent; color: var(--text-muted);
-    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
-    cursor: pointer; transition: all 0.15s;
-  }
-  .nav-btn:hover { color: var(--text); background: var(--surface2); }
-  .nav-btn.active { color: var(--text); background: var(--surface2); }
-
-  main { flex: 1; padding: 28px; max-width: 1100px; margin: 0 auto; width: 100%; }
-
-  .view { display: none; }
-  .view.active { display: block; }
-
-  /* KPI */
-  .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
-  .kpi {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 20px; position: relative; overflow: hidden;
-  }
-  .kpi::before { content:''; position:absolute; top:0;left:0;right:0; height:2px; }
-  .kpi.green::before { background: var(--green); }
-  .kpi.red::before { background: var(--red); }
-  .kpi.yellow::before { background: var(--yellow); }
-  .kpi.purple::before { background: var(--accent); }
-  .kpi-label { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:10px; }
-  .kpi-value { font-family:'DM Mono',monospace; font-size:26px; font-weight:500; line-height:1; }
-  .kpi-value.green { color:var(--green); }
-  .kpi-value.red { color:var(--red); }
-  .kpi-value.yellow { color:var(--yellow); }
-  .kpi-value.neutral { color:var(--text); }
-  .kpi-sub { font-size:11px; color:var(--text-muted); margin-top:6px; }
-
-  /* CHARTS */
-  .charts-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px; }
-  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; }
-  .card-title { font-size:12px; font-weight:500; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:16px; }
-  canvas { display:block; width:100%!important; }
-
-  /* TABLE */
-  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
-  .section-title { font-size:12px; font-weight:500; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); }
-
-  table { width:100%; border-collapse:collapse; font-size:13px; }
-  thead th {
-    text-align:left; padding:10px 14px;
-    font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.07em;
-    color:var(--text-muted); border-bottom:1px solid var(--border);
-  }
-  tbody tr { border-bottom:1px solid var(--border); transition:background .1s; }
-  tbody tr:hover { background:var(--surface2); }
-  tbody tr:last-child { border-bottom:none; }
-  tbody td { padding:12px 14px; color:var(--text-dim); }
-
-  .badge {
-    display:inline-flex; align-items:center;
-    padding:3px 9px; border-radius:99px;
-    font-size:11px; font-weight:500; font-family:'DM Mono',monospace;
-  }
-  .badge.win { background:var(--green-dim); color:var(--green); }
-  .badge.loss { background:var(--red-dim); color:var(--red); }
-  .badge.pending { background:var(--yellow-dim); color:var(--yellow); }
-  .badge.simples { background:#1a2030; color:#60a5fa; }
-  .badge.multipla { background:#201a30; color:#c084fc; }
-  .badge.aovivo { background:#1e2a1a; color:#86efac; }
-
-  .mono { font-family:'DM Mono',monospace; }
-  .positive { color:var(--green)!important; }
-  .negative { color:var(--red)!important; }
-
-  /* FORM */
-  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-  .form-group { display:flex; flex-direction:column; gap:6px; }
-  .form-group.full { grid-column:1/-1; }
-  label { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.07em; color:var(--text-muted); }
-  input, select, textarea {
-    background:var(--surface2); border:1px solid var(--border); border-radius:6px;
-    color:var(--text); font-family:'Inter',sans-serif; font-size:13px;
-    padding:10px 12px; outline:none; transition:border-color .15s; width:100%;
-  }
-  input:focus, select:focus, textarea:focus { border-color:var(--accent); }
-  select option { background:var(--surface); }
-
-  /* BUTTONS */
-  .btn {
-    display:inline-flex; align-items:center; gap:7px;
-    padding:9px 18px; border-radius:6px; border:none;
-    font-family:'Inter',sans-serif; font-size:13px; font-weight:500;
-    cursor:pointer; transition:all .15s; text-decoration:none;
-  }
-  .btn-primary { background:var(--accent); color:#fff; }
-  .btn-primary:hover { opacity:.85; }
-  .btn-ghost { background:transparent; color:var(--text-muted); border:1px solid var(--border); }
-  .btn-ghost:hover { color:var(--text); border-color:var(--text-muted); }
-  .btn-danger { background:var(--red-dim); color:var(--red); border:1px solid transparent; }
-  .btn-danger:hover { border-color:var(--red); }
-  .btn-success { background:var(--green-dim); color:var(--green); border:1px solid transparent; }
-  .btn-success:hover { border-color:var(--green); }
-  .btn-sm { padding:5px 10px; font-size:12px; }
-  .btn-icon { padding:7px; }
-  .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
-
-  /* BANCA */
-  .banca-header { display:flex; align-items:baseline; gap:12px; margin-bottom:24px; }
-  .banca-valor { font-family:'DM Mono',monospace; font-size:42px; font-weight:500; color:var(--green); }
-  .banca-label { font-size:13px; color:var(--text-muted); }
-
-  .timeline { display:flex; flex-direction:column; gap:0; }
-  .timeline-item {
-    display:grid; grid-template-columns:100px 1fr auto;
-    align-items:center; padding:12px 0;
-    border-bottom:1px solid var(--border); gap:16px;
-  }
-  .timeline-item:last-child { border-bottom:none; }
-  .timeline-date { font-family:'DM Mono',monospace; font-size:11px; color:var(--text-muted); }
-  .timeline-desc { font-size:13px; color:var(--text-dim); }
-  .timeline-valor { font-family:'DM Mono',monospace; font-size:13px; font-weight:500; text-align:right; }
-
-  /* MODAL */
-  .modal-overlay {
-    display:none; position:fixed; inset:0;
-    background:rgba(0,0,0,.7); z-index:200;
-    align-items:center; justify-content:center;
-  }
-  .modal-overlay.open { display:flex; }
-  .modal {
-    background:var(--surface); border:1px solid var(--border);
-    border-radius:12px; padding:28px; width:100%; max-width:540px;
-    max-height:90vh; overflow-y:auto;
-  }
-  .modal-title { font-size:16px; font-weight:600; margin-bottom:20px; color:var(--text); }
-
-  /* EMPTY */
-  .empty { text-align:center; padding:60px 20px; color:var(--text-muted); }
-  .empty-icon { font-size:36px; margin-bottom:12px; opacity:.4; }
-  .empty p { font-size:13px; line-height:1.6; }
-
-  /* FILTERS */
-  .filters { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
-  .filter-select { padding:7px 12px; font-size:12px; border-radius:6px; flex:1; min-width:130px; }
-
-  .retorno-preview { font-size:11px; color:var(--text-muted); margin-top:4px; }
-
-  /* SETUP VIEW */
-  .setup-wrap { max-width: 680px; margin: 0 auto; }
-
-  .setup-hero {
-    text-align: center;
-    padding: 40px 0 32px;
-  }
-  .setup-hero h1 { font-size: 28px; font-weight: 600; margin-bottom: 10px; }
-  .setup-hero p { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
-
-  .steps { display: flex; flex-direction: column; gap: 16px; margin-bottom: 28px; }
-
-  .step {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px 24px;
-    display: grid;
-    grid-template-columns: 36px 1fr;
-    gap: 16px;
-    align-items: start;
-  }
-
-  .step-num {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: var(--accent-dim);
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    font-family: 'DM Mono', monospace;
-    font-size: 13px; font-weight: 500;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .step-content h3 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
-  .step-content p { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px; }
-
-  .code-block {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 14px 16px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: #a5b4fc;
-    white-space: pre;
-    overflow-x: auto;
-    position: relative;
-    line-height: 1.6;
-  }
-
-  .copy-btn {
-    position: absolute; top: 8px; right: 8px;
-    padding: 4px 10px; font-size: 10px;
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 4px; color: var(--text-muted);
-    cursor: pointer; font-family: 'Inter', sans-serif;
-    transition: all 0.15s;
-  }
-  .copy-btn:hover { color: var(--text); }
-
-  .url-input-wrap { display: flex; gap: 10px; margin-top: 10px; }
-  .url-input-wrap input { flex: 1; font-family: 'DM Mono', monospace; font-size: 12px; }
-
-  .alert {
-    padding: 12px 16px; border-radius: 6px;
-    font-size: 12px; line-height: 1.5;
-    margin-top: 8px;
-  }
-  .alert.info { background: var(--accent-dim); border: 1px solid var(--accent); color: #a5b4fc; }
-  .alert.success { background: var(--green-dim); border: 1px solid var(--green); color: var(--green); }
-  .alert.error { background: var(--red-dim); border: 1px solid var(--red); color: var(--red); }
-
-  /* scrollbar */
-  ::-webkit-scrollbar { width:6px; height:6px; }
-  ::-webkit-scrollbar-track { background:transparent; }
-  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
-
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;min-height:100vh;}
+  .app{display:flex;flex-direction:column;min-height:100vh;}
+  header{padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);position:sticky;top:0;z-index:100;}
+  .logo{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;letter-spacing:.04em;color:var(--text);display:flex;align-items:center;gap:10px;}
+  .logo-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .header-right{display:flex;align-items:center;gap:12px;}
+  .sync-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;}
+  .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--text-muted);}
+  .sync-dot.ok{background:var(--green);box-shadow:0 0 6px var(--green);}
+  .sync-dot.err{background:var(--red);}
+  .sync-dot.syncing{background:var(--yellow);animation:pulse 1s infinite;}
+  nav{display:flex;gap:4px;}
+  .nav-btn{padding:7px 16px;border-radius:6px;border:none;background:transparent;color:var(--text-muted);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;}
+  .nav-btn:hover{color:var(--text);background:var(--surface2);}
+  .nav-btn.active{color:var(--text);background:var(--surface2);}
+  main{flex:1;padding:28px;max-width:1100px;margin:0 auto;width:100%;}
+  .view{display:none;}.view.active{display:block;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+  .kpi.green::before{background:var(--green)}.kpi.red::before{background:var(--red)}.kpi.yellow::before{background:var(--yellow)}.kpi.purple::before{background:var(--accent)}
+  .kpi-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:10px;}
+  .kpi-value{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;line-height:1;}
+  .kpi-value.green{color:var(--green)}.kpi-value.red{color:var(--red)}.kpi-value.yellow{color:var(--yellow)}.kpi-value.neutral{color:var(--text)}
+  .kpi-sub{font-size:11px;color:var(--text-muted);margin-top:6px;}
+  .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+  .card-title{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:16px;}
+  canvas{display:block;width:100%!important;}
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .section-title{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{text-align:left;padding:10px 14px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);border-bottom:1px solid var(--border);}
+  tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+  tbody tr:hover{background:var(--surface2);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody td{padding:12px 14px;color:var(--text-dim);}
+  .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:500;font-family:'DM Mono',monospace;}
+  .badge.win{background:var(--green-dim);color:var(--green)}.badge.loss{background:var(--red-dim);color:var(--red)}.badge.pending{background:var(--yellow-dim);color:var(--yellow)}
+  .badge.simples{background:#1a2030;color:#60a5fa}.badge.multipla{background:#201a30;color:#c084fc}.badge.aovivo{background:#1e2a1a;color:#86efac}
+  .mono{font-family:'DM Mono',monospace;}.positive{color:var(--green)!important;}.negative{color:var(--red)!important;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .form-group{display:flex;flex-direction:column;gap:6px;}.form-group.full{grid-column:1/-1;}
+  label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);}
+  input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:10px 12px;outline:none;transition:border-color .15s;width:100%;}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+  select option{background:var(--surface);}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:6px;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;}
+  .btn-primary{background:var(--accent);color:#fff;}.btn-primary:hover{opacity:.85;}
+  .btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border);}.btn-ghost:hover{color:var(--text);border-color:var(--text-muted);}
+  .btn-danger{background:var(--red-dim);color:var(--red);border:1px solid transparent;}.btn-danger:hover{border-color:var(--red);}
+  .btn-success{background:var(--green-dim);color:var(--green);border:1px solid transparent;}.btn-success:hover{border-color:var(--green);}
+  .btn-sm{padding:5px 10px;font-size:12px;}.btn-icon{padding:7px;}
+  .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+  .banca-header{display:flex;align-items:baseline;gap:12px;margin-bottom:24px;}
+  .banca-valor{font-family:'DM Mono',monospace;font-size:42px;font-weight:500;color:var(--green);}
+  .banca-label{font-size:13px;color:var(--text-muted);}
+  .timeline{display:flex;flex-direction:column;}
+  .timeline-item{display:grid;grid-template-columns:100px 1fr auto;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);gap:16px;}
+  .timeline-item:last-child{border-bottom:none;}
+  .timeline-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);}
+  .timeline-desc{font-size:13px;color:var(--text-dim);}
+  .timeline-valor{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;text-align:right;}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;}
+  .modal-title{font-size:16px;font-weight:600;margin-bottom:20px;color:var(--text);}
+  .empty{text-align:center;padding:60px 20px;color:var(--text-muted);}
+  .empty-icon{font-size:36px;margin-bottom:12px;opacity:.4;}
+  .empty p{font-size:13px;line-height:1.6;}
+  .filters{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+  .filter-select{padding:7px 12px;font-size:12px;border-radius:6px;flex:1;min-width:130px;}
+  .retorno-preview{font-size:11px;color:var(--text-muted);margin-top:4px;}
+  /* SETUP */
+  .setup-wrap{max-width:600px;margin:0 auto;}
+  .setup-hero{text-align:center;padding:40px 0 32px;}
+  .setup-hero h1{font-size:26px;font-weight:600;margin-bottom:10px;}
+  .setup-hero p{color:var(--text-muted);font-size:14px;line-height:1.6;}
+  .setup-form{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:16px;}
+  .setup-form h3{font-size:14px;font-weight:600;margin-bottom:6px;}
+  .setup-form p{font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:20px;}
+  .alert{padding:12px 16px;border-radius:6px;font-size:12px;line-height:1.5;margin-top:12px;}
+  .alert.info{background:var(--accent-dim);border:1px solid var(--accent);color:#a5b4fc;}
+  .alert.success{background:var(--green-dim);border:1px solid var(--green);color:var(--green);}
+  .alert.error{background:var(--red-dim);border:1px solid var(--red);color:var(--red);}
+  .connected-box{background:var(--surface);border:1px solid var(--green);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+  .connected-box h3{color:var(--green);font-size:14px;margin-bottom:12px;}
+  ::-webkit-scrollbar{width:6px;height:6px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
   @media(max-width:768px){
-    .kpi-grid { grid-template-columns:1fr 1fr; }
-    .charts-row { grid-template-columns:1fr; }
-    .form-grid { grid-template-columns:1fr; }
-    main { padding:16px; }
-    header { padding:14px 16px; flex-wrap: wrap; gap: 10px; }
-    .banca-valor { font-size:30px; }
-    .kpi-value { font-size:20px; }
-    nav { order: 3; width: 100%; }
+    .kpi-grid{grid-template-columns:1fr 1fr;}.charts-row{grid-template-columns:1fr;}.form-grid{grid-template-columns:1fr;}
+    main{padding:16px;}header{padding:14px 16px;flex-wrap:wrap;gap:10px;}
+    .banca-valor{font-size:30px;}.kpi-value{font-size:20px;}nav{order:3;width:100%;}
   }
 </style>
 </head>
 <body>
 <div class="app">
-
   <header>
-    <div class="logo">
-      <span class="logo-dot"></span>
-      bankroll
-    </div>
+    <div class="logo"><span class="logo-dot"></span>bankroll</div>
     <div class="header-right">
-      <div class="sync-status" id="sync-status">
+      <div class="sync-status">
         <div class="sync-dot" id="sync-dot"></div>
         <span id="sync-label">local</span>
       </div>
-      <button class="btn btn-ghost btn-sm" onclick="showView('setup')" title="Configurar sincronização">⚙ Sync</button>
+      <button class="btn btn-ghost btn-sm" onclick="showView('setup')">⚙ Sync</button>
     </div>
     <nav>
       <button class="nav-btn active" onclick="showView('dashboard')">Dashboard</button>
@@ -324,7 +128,6 @@
   </header>
 
   <main>
-
     <!-- DASHBOARD -->
     <div class="view active" id="view-dashboard">
       <div class="kpi-grid">
@@ -350,14 +153,8 @@
         </div>
       </div>
       <div class="charts-row">
-        <div class="card">
-          <div class="card-title">Evolução da Banca</div>
-          <canvas id="chart-banca" height="160"></canvas>
-        </div>
-        <div class="card">
-          <div class="card-title">Resultado por Tipo</div>
-          <canvas id="chart-tipo" height="160"></canvas>
-        </div>
+        <div class="card"><div class="card-title">Evolução da Banca</div><canvas id="chart-banca" height="160"></canvas></div>
+        <div class="card"><div class="card-title">Resultado por Tipo</div><canvas id="chart-tipo" height="160"></canvas></div>
       </div>
       <div class="card">
         <div class="section-header">
@@ -415,128 +212,44 @@
     <div class="view" id="view-setup">
       <div class="setup-wrap">
         <div class="setup-hero">
-          <h1>Sincronização entre dispositivos</h1>
-          <p>Conecte o app ao Google Sheets para acessar seus dados<br>de qualquer dispositivo, sem instalar nada.</p>
+          <h1>Sincronização Supabase</h1>
+          <p>Conecte com o Supabase para acessar seus dados<br>de qualquer dispositivo automaticamente.</p>
         </div>
 
-        <div class="steps">
-
-          <!-- STEP 1 -->
-          <div class="step">
-            <div class="step-num">1</div>
-            <div class="step-content">
-              <h3>Abra o Google Apps Script</h3>
-              <p>Acesse <strong style="color:var(--text)">script.google.com</strong>, clique em <strong style="color:var(--text)">"Novo projeto"</strong> e apague o código que aparecer.</p>
-              <a href="https://script.google.com" target="_blank" class="btn btn-ghost btn-sm" style="display:inline-flex;width:fit-content">Abrir Apps Script →</a>
+        <div id="setup-connected" style="display:none">
+          <div class="connected-box">
+            <h3>✅ Conectado ao Supabase</h3>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="btn btn-success btn-sm" onclick="syncNow()">↕ Sincronizar agora</button>
+              <button class="btn btn-ghost btn-sm" onclick="pullData(true)">⬇ Baixar do Supabase</button>
+              <button class="btn btn-ghost btn-sm" onclick="pushData(true)">⬆ Enviar para Supabase</button>
+              <button class="btn btn-danger btn-sm" onclick="desconectar()">Desconectar</button>
             </div>
+            <div id="sync-result"></div>
           </div>
-
-          <!-- STEP 2 -->
-          <div class="step">
-            <div class="step-num">2</div>
-            <div class="step-content">
-              <h3>Cole o script abaixo</h3>
-              <p>Copie o código e cole no editor do Apps Script. Depois clique em <strong style="color:var(--text)">Salvar (Ctrl+S)</strong>.</p>
-              <div class="code-block" id="gas-code">const SHEET_NAME = 'Bankroll';
-
-function salvarDados(data) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(SHEET_NAME);
-  if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
-  sheet.clearContents();
-  sheet.getRange(1, 1).setValue(JSON.stringify(data));
-}
-
-function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    salvarDados(data);
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: true }))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: false, error: err.message }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function doGet(e) {
-  try {
-    // Suporte a GET com payload (fallback para CORS)
-    if (e.parameter && e.parameter.action === 'save' && e.parameter.payload) {
-      const data = JSON.parse(decodeURIComponent(e.parameter.payload));
-      salvarDados(data);
-      return ContentService
-        .createTextOutput(JSON.stringify({ ok: true }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-    // Leitura normal
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_NAME);
-    if (!sheet || sheet.getLastRow() === 0) {
-      return ContentService
-        .createTextOutput(JSON.stringify({ ok: true, data: null }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-    const raw = sheet.getRange(1, 1).getValue();
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: true, data: JSON.parse(raw) }))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: false, error: err.message }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}</div>
-              <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="copyScript()">Copiar código</button>
-            </div>
-          </div>
-
-          <!-- STEP 3 -->
-          <div class="step">
-            <div class="step-num">3</div>
-            <div class="step-content">
-              <h3>Implante como Web App</h3>
-              <p>No Apps Script, clique em <strong style="color:var(--text)">Implantar → Nova implantação</strong>. Escolha tipo <strong style="color:var(--text)">"App da Web"</strong>. Em <em>"Quem tem acesso"</em>, selecione <strong style="color:var(--text)">"Qualquer pessoa"</strong>. Clique em <strong style="color:var(--text)">Implantar</strong> e autorize quando solicitado.</p>
-              <div class="alert info">💡 O Google pedirá autorização para acessar suas planilhas. Aceite — o script só lê e escreve dados do próprio app, em uma planilha que ele cria automaticamente.</div>
-            </div>
-          </div>
-
-          <!-- STEP 4 -->
-          <div class="step">
-            <div class="step-num">4</div>
-            <div class="step-content">
-              <h3>Cole a URL aqui</h3>
-              <p>Após implantar, copie a <strong style="color:var(--text)">URL do Web App</strong> e cole abaixo.</p>
-              <div class="url-input-wrap">
-                <input type="text" id="script-url-input" placeholder="https://script.google.com/macros/s/…/exec">
-                <button class="btn btn-primary" onclick="salvarUrl()">Conectar</button>
-              </div>
-              <div id="url-alert"></div>
-            </div>
-          </div>
-
         </div>
 
-        <!-- STATUS E AÇÕES -->
-        <div class="card" id="sync-actions-card" style="display:none">
-          <div class="section-header" style="margin-bottom:12px">
-            <div class="section-title">Sincronização ativa</div>
-            <div id="sync-url-display" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);word-break:break-all"></div>
+        <div id="setup-form-wrap">
+          <div class="setup-form">
+            <h3>Insira as credenciais do Supabase</h3>
+            <p>Vá em <strong style="color:var(--text)">Settings → API</strong> no seu projeto Supabase e copie os dois valores abaixo.</p>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label>Project URL</label>
+              <input type="text" id="supa-url" placeholder="https://xxxx.supabase.co">
+            </div>
+            <div class="form-group" style="margin-bottom:4px;">
+              <label>Publishable / Anon Key</label>
+              <input type="text" id="supa-key" placeholder="sb_publishable_... ou eyJ...">
+            </div>
+            <div class="actions" style="margin-top:16px;">
+              <button class="btn btn-primary" onclick="conectarSupabase()">Conectar</button>
+            </div>
+            <div id="setup-alert"></div>
           </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn btn-success btn-sm" onclick="syncNow()">↕ Sincronizar agora</button>
-            <button class="btn btn-ghost btn-sm" onclick="pullData()">⬇ Baixar do Google</button>
-            <button class="btn btn-ghost btn-sm" onclick="pushData()">⬆ Enviar para Google</button>
-            <button class="btn btn-danger btn-sm" onclick="desconectar()">Desconectar</button>
-          </div>
-          <div id="sync-result" style="margin-top:12px"></div>
         </div>
 
       </div>
     </div>
-
   </main>
 </div>
 
@@ -597,11 +310,11 @@ function doGet(e) {
 <div class="modal-overlay" id="modal-banca">
   <div class="modal" style="max-width:360px">
     <div class="modal-title" id="modal-banca-title">Depósito</div>
-    <div class="form-group" style="margin-bottom:16px">
+    <div class="form-group" style="margin-bottom:16px;">
       <label>Valor (R$)</label>
       <input type="number" id="banca-valor-input" min="0" step="0.01" placeholder="0,00">
     </div>
-    <div class="form-group" style="margin-bottom:4px">
+    <div class="form-group" style="margin-bottom:4px;">
       <label>Descrição (opcional)</label>
       <input type="text" id="banca-desc-input" placeholder="Ex: Bônus da casa">
     </div>
@@ -613,28 +326,47 @@ function doGet(e) {
 </div>
 
 <script>
+// ===================== CONFIG SUPABASE =====================
+let SUPA_URL = '';
+let SUPA_KEY = '';
+const TABLE = 'bankroll';
+const ROW_ID = 1;
+
+function supaHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'apikey': SUPA_KEY,
+    'Authorization': 'Bearer ' + SUPA_KEY
+  };
+}
+
 // ===================== ESTADO =====================
 let state = { banca: 0, bancaInicial: 0, apostas: [], movBanca: [] };
-let scriptUrl = '';
 
-function loadState() {
-  const raw = localStorage.getItem('bankroll_v3');
+function loadLocal() {
+  const raw = localStorage.getItem('bankroll_v4');
   if (raw) state = JSON.parse(raw);
-  scriptUrl = localStorage.getItem('bankroll_script_url') || '';
-  updateSyncStatus('idle');
-  if (scriptUrl) {
-    document.getElementById('sync-actions-card').style.display = 'block';
-    document.getElementById('sync-url-display').textContent = scriptUrl;
-    document.getElementById('script-url-input').value = scriptUrl;
+  SUPA_URL = localStorage.getItem('supa_url') || '';
+  SUPA_KEY = localStorage.getItem('supa_key') || '';
+  if (SUPA_URL && SUPA_KEY) {
+    updateSyncStatus('ok', 'conectado');
+    document.getElementById('setup-connected').style.display = 'block';
+    document.getElementById('setup-form-wrap').style.display = 'none';
+    document.getElementById('supa-url').value = SUPA_URL;
+    document.getElementById('supa-key').value = SUPA_KEY;
   }
 }
 
-function saveState() {
-  localStorage.setItem('bankroll_v3', JSON.stringify(state));
-  if (scriptUrl) autoSync();
+function saveLocal() {
+  localStorage.setItem('bankroll_v4', JSON.stringify(state));
 }
 
-// ===================== SYNC =====================
+async function saveState() {
+  saveLocal();
+  if (SUPA_URL && SUPA_KEY) await pushData(false);
+}
+
+// ===================== SUPABASE SYNC =====================
 function updateSyncStatus(s, label) {
   const dot = document.getElementById('sync-dot');
   const lbl = document.getElementById('sync-label');
@@ -642,142 +374,110 @@ function updateSyncStatus(s, label) {
   if (s === 'ok') { dot.classList.add('ok'); lbl.textContent = label || 'sincronizado'; }
   else if (s === 'err') { dot.classList.add('err'); lbl.textContent = label || 'erro'; }
   else if (s === 'syncing') { dot.classList.add('syncing'); lbl.textContent = 'sincronizando…'; }
-  else { lbl.textContent = scriptUrl ? 'conectado' : 'local'; }
-}
-
-async function gasRequest(url, method, body) {
-  const opts = {
-    method: method || 'GET',
-    redirect: 'follow',
-    mode: 'cors',
-  };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(url, opts);
-  const text = await res.text();
-  // O Google às vezes retorna HTML de redirecionamento em vez de JSON
-  if (text.trim().startsWith('<')) throw new Error('redirect_html');
-  return JSON.parse(text);
-}
-
-async function pushData() {
-  if (!scriptUrl) return;
-  updateSyncStatus('syncing');
-  try {
-    // POST direto pode falhar por CORS preflight; usamos GET com dados codificados como fallback
-    let json;
-    try {
-      json = await gasRequest(scriptUrl, 'POST', state);
-    } catch(e) {
-      // Fallback: envia via GET com payload em query string (limitado mas funciona)
-      const encoded = encodeURIComponent(JSON.stringify(state));
-      const res = await fetch(`${scriptUrl}?action=save&payload=${encoded}`, { redirect: 'follow' });
-      const text = await res.text();
-      json = text.trim().startsWith('<') ? { ok: false } : JSON.parse(text);
-    }
-    if (json && json.ok) updateSyncStatus('ok', 'enviado');
-    else throw new Error('falha no envio');
-  } catch(e) {
-    updateSyncStatus('err', 'falha envio');
-  }
-}
-
-async function pullData() {
-  if (!scriptUrl) return;
-  updateSyncStatus('syncing');
-  try {
-    const res = await fetch(scriptUrl, { redirect: 'follow', mode: 'cors' });
-    const text = await res.text();
-    if (text.trim().startsWith('<')) throw new Error('html_response');
-    const json = JSON.parse(text);
-    if (json.ok && json.data) {
-      state = json.data;
-      localStorage.setItem('bankroll_v3', JSON.stringify(state));
-      updateSyncStatus('ok', 'atualizado');
-      renderDashboard();
-      renderApostas();
-      renderBanca();
-      showSyncResult('✅ Dados baixados do Google com sucesso.', 'success');
-    } else {
-      updateSyncStatus('ok', 'vazio');
-      showSyncResult('ℹ️ Nenhum dado no Google ainda. Seus dados locais serão enviados.', 'info');
-    }
-  } catch(e) {
-    updateSyncStatus('err', 'falha');
-    showSyncResult('❌ Erro ao conectar. Verifique a URL e tente novamente.', 'error');
-  }
-}
-
-async function syncNow() {
-  await pullData();
-  await pushData();
-}
-
-let syncTimer = null;
-function autoSync() {
-  clearTimeout(syncTimer);
-  syncTimer = setTimeout(pushData, 1500);
+  else { lbl.textContent = 'local'; }
 }
 
 function showSyncResult(msg, type) {
   const el = document.getElementById('sync-result');
   if (!el) return;
-  el.innerHTML = `<div class="alert ${type}">${msg}</div>`;
-  setTimeout(() => { if(el) el.innerHTML = ''; }, 4000);
+  el.innerHTML = `<div class="alert ${type}" style="margin-top:12px">${msg}</div>`;
+  setTimeout(() => { if (el) el.innerHTML = ''; }, 4000);
 }
 
-// ===================== SETUP =====================
-function copyScript() {
-  const code = document.getElementById('gas-code').textContent;
-  navigator.clipboard.writeText(code).then(() => {
-    const btn = event.target;
-    btn.textContent = '✓ Copiado!';
-    setTimeout(() => btn.textContent = 'Copiar código', 2000);
-  });
-}
-
-async function salvarUrl() {
-  const url = document.getElementById('script-url-input').value.trim();
-  const alertEl = document.getElementById('url-alert');
-  if (!url || !url.includes('script.google.com')) {
-    alertEl.innerHTML = '<div class="alert error">URL inválida. Deve começar com https://script.google.com…</div>';
-    return;
-  }
-  alertEl.innerHTML = '<div class="alert info">Testando conexão…</div>';
-  scriptUrl = url;
-  localStorage.setItem('bankroll_script_url', url);
+async function pushData(feedback = true) {
+  if (!SUPA_URL || !SUPA_KEY) return;
+  if (feedback) updateSyncStatus('syncing');
   try {
-    const res = await fetch(url, { redirect: 'follow', mode: 'cors' });
-    const text = await res.text();
-    if (text.trim().startsWith('<')) throw new Error('html_redirect');
-    const json = JSON.parse(text);
-    if (json.ok) {
-      document.getElementById('sync-actions-card').style.display = 'block';
-      document.getElementById('sync-url-display').textContent = url;
-      updateSyncStatus('ok', 'conectado');
-      if (json.data) {
-        state = json.data;
-        localStorage.setItem('bankroll_v3', JSON.stringify(state));
-        alertEl.innerHTML = '<div class="alert success">✅ Conectado! Dados carregados do Google.</div>';
-        renderDashboard(); renderApostas(); renderBanca();
-      } else {
-        alertEl.innerHTML = '<div class="alert success">✅ Conectado com sucesso!</div>';
-        await pushData();
-      }
-    } else throw new Error(json.error || 'erro desconhecido');
+    const payload = { id: ROW_ID, data: JSON.stringify(state) };
+    // upsert
+    const res = await fetch(`${SUPA_URL}/rest/v1/${TABLE}?on_conflict=id`, {
+      method: 'POST',
+      headers: { ...supaHeaders(), 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok || res.status === 201 || res.status === 200) {
+      updateSyncStatus('ok', 'salvo');
+      if (feedback) showSyncResult('✅ Dados enviados ao Supabase.', 'success');
+    } else {
+      const err = await res.text();
+      throw new Error(err);
+    }
   } catch(e) {
-    alertEl.innerHTML = '<div class="alert error">❌ Não foi possível conectar. Verifique se a URL está correta e se o acesso está definido como "Qualquer pessoa".</div>';
-    scriptUrl = '';
-    localStorage.removeItem('bankroll_script_url');
+    updateSyncStatus('err', 'falha');
+    if (feedback) showSyncResult('❌ Erro ao salvar: ' + e.message, 'error');
+  }
+}
+
+async function pullData(feedback = true) {
+  if (!SUPA_URL || !SUPA_KEY) return;
+  updateSyncStatus('syncing');
+  try {
+    const res = await fetch(`${SUPA_URL}/rest/v1/${TABLE}?id=eq.${ROW_ID}&select=data`, {
+      headers: supaHeaders()
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const rows = await res.json();
+    if (rows && rows.length > 0 && rows[0].data) {
+      state = JSON.parse(rows[0].data);
+      saveLocal();
+      updateSyncStatus('ok', 'atualizado');
+      renderDashboard(); renderApostas(); renderBanca();
+      if (feedback) showSyncResult('✅ Dados carregados do Supabase.', 'success');
+    } else {
+      updateSyncStatus('ok', 'conectado');
+      if (feedback) showSyncResult('ℹ️ Nenhum dado no Supabase ainda. Seus dados locais serão enviados.', 'info');
+      await pushData(false);
+    }
+  } catch(e) {
+    updateSyncStatus('err', 'falha');
+    if (feedback) showSyncResult('❌ Erro ao carregar: ' + e.message, 'error');
+  }
+}
+
+async function syncNow() {
+  await pullData(false);
+  await pushData(false);
+  showSyncResult('✅ Sincronizado com sucesso.', 'success');
+  updateSyncStatus('ok', 'sincronizado');
+}
+
+async function conectarSupabase() {
+  const url = document.getElementById('supa-url').value.trim().replace(/\/$/, '');
+  const key = document.getElementById('supa-key').value.trim();
+  const alertEl = document.getElementById('setup-alert');
+  if (!url || !key) { alertEl.innerHTML = '<div class="alert error">Preencha os dois campos.</div>'; return; }
+  alertEl.innerHTML = '<div class="alert info">Testando conexão…</div>';
+  try {
+    const res = await fetch(`${url}/rest/v1/${TABLE}?id=eq.${ROW_ID}&select=id`, {
+      headers: {
+        'apikey': key,
+        'Authorization': 'Bearer ' + key
+      }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' — verifique a URL e a chave.');
+    SUPA_URL = url;
+    SUPA_KEY = key;
+    localStorage.setItem('supa_url', url);
+    localStorage.setItem('supa_key', key);
+    alertEl.innerHTML = '<div class="alert success">✅ Conectado!</div>';
+    updateSyncStatus('ok', 'conectado');
+    document.getElementById('setup-connected').style.display = 'block';
+    document.getElementById('setup-form-wrap').style.display = 'none';
+    await pullData(false);
+    showSyncResult('✅ Conectado e sincronizado!', 'success');
+  } catch(e) {
+    alertEl.innerHTML = `<div class="alert error">❌ ${e.message}</div>`;
     updateSyncStatus('err');
   }
 }
 
 function desconectar() {
-  if (!confirm('Desconectar do Google? Os dados locais serão mantidos.')) return;
-  scriptUrl = '';
-  localStorage.removeItem('bankroll_script_url');
-  document.getElementById('sync-actions-card').style.display = 'none';
-  document.getElementById('script-url-input').value = '';
+  if (!confirm('Desconectar do Supabase? Os dados locais serão mantidos.')) return;
+  SUPA_URL = ''; SUPA_KEY = '';
+  localStorage.removeItem('supa_url');
+  localStorage.removeItem('supa_key');
+  document.getElementById('setup-connected').style.display = 'none';
+  document.getElementById('setup-form-wrap').style.display = 'block';
   updateSyncStatus('idle');
 }
 
@@ -786,8 +486,7 @@ function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach((b, i) => {
-    const names = ['dashboard','apostas','banca'];
-    b.classList.toggle('active', names[i] === name);
+    b.classList.toggle('active', ['dashboard','apostas','banca'][i] === name);
   });
   if (name === 'dashboard') renderDashboard();
   if (name === 'apostas') renderApostas();
@@ -820,23 +519,17 @@ function renderDashboard() {
 
   document.getElementById('kpi-banca').textContent = fmtMoeda(state.banca);
   document.getElementById('kpi-banca-sub').textContent = 'Banca inicial: ' + fmtMoeda(state.bancaInicial);
-
   const kpiLucro = document.getElementById('kpi-lucro');
   kpiLucro.textContent = fmtMoeda(lucro);
   kpiLucro.className = 'kpi-value ' + (lucro >= 0 ? 'green' : 'red');
   document.getElementById('kpi-lucro-card').className = 'kpi ' + (lucro >= 0 ? 'green' : 'red');
   document.getElementById('kpi-lucro-sub').textContent = enc.length + ' apostas encerradas';
-
   const kpiRoi = document.getElementById('kpi-roi');
   kpiRoi.textContent = roi.toFixed(2).replace('.', ',') + '%';
   kpiRoi.className = 'kpi-value ' + (roi >= 0 ? 'green' : 'red');
-
   document.getElementById('kpi-acerto').textContent = acerto.toFixed(0) + '%';
   document.getElementById('kpi-acerto-sub').textContent = `${ganhas.length} ganhas de ${enc.length}`;
-
-  renderChartBanca();
-  renderChartTipo();
-
+  renderChartBanca(); renderChartTipo();
   const recent = [...state.apostas].sort((a,b) => b.id - a.id).slice(0,5);
   document.getElementById('dash-table-wrap').innerHTML = renderTabelaApostas(recent, true);
 }
@@ -849,25 +542,14 @@ function renderChartBanca() {
     if (a.resultado === 'ganhou') banca += (a.valor * a.odd) - a.valor;
     else if (a.resultado === 'perdeu') banca -= a.valor;
     else continue;
-    labels.push(fmtData(a.data));
-    valores.push(parseFloat(banca.toFixed(2)));
+    labels.push(fmtData(a.data)); valores.push(parseFloat(banca.toFixed(2)));
   }
   const ctx = document.getElementById('chart-banca').getContext('2d');
   if (chartBanca) chartBanca.destroy();
   chartBanca = new Chart(ctx, {
     type: 'line',
-    data: {
-      labels,
-      datasets: [{ data: valores, borderColor: '#00e676', backgroundColor: 'rgba(0,230,118,0.07)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#00e676', tension: 0.3, fill: true }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: '#2a2d35' } },
-        y: { ticks: { color: '#6b7280', font: { size: 10 }, callback: v => 'R$' + v.toFixed(0) }, grid: { color: '#2a2d35' } }
-      }
-    }
+    data: { labels, datasets: [{ data: valores, borderColor: '#00e676', backgroundColor: 'rgba(0,230,118,0.07)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#00e676', tension: 0.3, fill: true }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: '#2a2d35' } }, y: { ticks: { color: '#6b7280', font: { size: 10 }, callback: v => 'R$' + v.toFixed(0) }, grid: { color: '#2a2d35' } } } }
   });
 }
 
@@ -878,14 +560,8 @@ function renderChartTipo() {
   if (chartTipo) chartTipo.destroy();
   chartTipo = new Chart(ctx, {
     type: 'doughnut',
-    data: {
-      labels: ['Simples','Múltipla','Ao Vivo'],
-      datasets: [{ data: Object.values(tipos), backgroundColor: ['#60a5fa','#c084fc','#86efac'], borderColor: '#16181c', borderWidth: 3 }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 11 }, boxWidth: 12, padding: 14 } } }
-    }
+    data: { labels: ['Simples','Múltipla','Ao Vivo'], datasets: [{ data: Object.values(tipos), backgroundColor: ['#60a5fa','#c084fc','#86efac'], borderColor: '#16181c', borderWidth: 3 }] },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 11 }, boxWidth: 12, padding: 14 } } } }
   });
 }
 
@@ -898,13 +574,10 @@ function renderApostas() {
   if (fRes) lista = lista.filter(a => a.resultado === fRes);
   if (fTipo) lista = lista.filter(a => a.tipo === fTipo);
   if (fCasa) lista = lista.filter(a => a.casa === fCasa);
-
   const casas = [...new Set(state.apostas.map(a => a.casa).filter(Boolean))];
   const selCasa = document.getElementById('filter-casa');
   const cur = selCasa.value;
-  selCasa.innerHTML = '<option value="">Todas as casas</option>' +
-    casas.map(c => `<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('');
-
+  selCasa.innerHTML = '<option value="">Todas as casas</option>' + casas.map(c => `<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('');
   document.getElementById('apostas-table-wrap').innerHTML = renderTabelaApostas(lista, false);
 }
 
@@ -914,15 +587,10 @@ function renderTabelaApostas(lista, mini) {
   const resBadges = { ganhou:'badge win', perdeu:'badge loss', pendente:'badge pending' };
   const resLabels = { ganhou:'Ganhou', perdeu:'Perdeu', pendente:'Pendente' };
   const tipoLabels = { simples:'Simples', multipla:'Múltipla', aovivo:'Ao Vivo' };
-
   const rows = lista.map(a => {
     const lucro = a.resultado==='ganhou' ? (a.valor*a.odd-a.valor) : a.resultado==='perdeu' ? -a.valor : null;
-    const lucroHtml = lucro!==null
-      ? `<span class="${lucro>=0?'positive':'negative'} mono">${fmtMoeda(lucro)}</span>`
-      : '<span style="color:var(--text-muted)">—</span>';
-    const acoes = mini ? '' : `
-      <button class="btn btn-ghost btn-sm" onclick="editarAposta(${a.id})">Editar</button>
-      <button class="btn btn-danger btn-sm btn-icon" onclick="deletarAposta(${a.id})" title="Excluir">✕</button>`;
+    const lucroHtml = lucro!==null ? `<span class="${lucro>=0?'positive':'negative'} mono">${fmtMoeda(lucro)}</span>` : '<span style="color:var(--text-muted)">—</span>';
+    const acoes = mini ? '' : `<button class="btn btn-ghost btn-sm" onclick="editarAposta(${a.id})">Editar</button><button class="btn btn-danger btn-sm btn-icon" onclick="deletarAposta(${a.id})" title="Excluir">✕</button>`;
     return `<tr>
       <td>${fmtData(a.data)}</td>
       <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.desc||'—'}</td>
@@ -934,16 +602,7 @@ function renderTabelaApostas(lista, mini) {
       ${mini?'':'<td style="white-space:nowrap">'+acoes+'</td>'}
     </tr>`;
   }).join('');
-
-  return `<table>
-    <thead><tr>
-      <th>Data</th><th>Evento</th>
-      ${mini?'':'<th>Tipo</th>'}
-      <th>Odd</th><th>Valor</th><th>Resultado</th><th>Status</th>
-      ${mini?'':'<th></th>'}
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
+  return `<table><thead><tr><th>Data</th><th>Evento</th>${mini?'':'<th>Tipo</th>'}<th>Odd</th><th>Valor</th><th>Resultado</th><th>Status</th>${mini?'':'<th></th>'}</tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 // ===================== MODAL APOSTA =====================
@@ -966,14 +625,15 @@ function openModal(id) {
     document.getElementById('f-obs').value = a.obs || '';
   } else {
     document.getElementById('modal-title').textContent = 'Nova Aposta';
-    ['f-data','f-tipo','f-desc','f-casa','f-esporte','f-valor','f-odd','f-obs'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el.tagName === 'SELECT') {
-        if (id === 'f-tipo') el.value = 'simples';
-        else if (id === 'f-esporte') el.value = 'Futebol';
-      } else el.value = id === 'f-data' ? today : '';
-    });
+    document.getElementById('f-data').value = today;
+    document.getElementById('f-tipo').value = 'simples';
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-casa').value = '';
+    document.getElementById('f-esporte').value = 'Futebol';
+    document.getElementById('f-valor').value = '';
+    document.getElementById('f-odd').value = '';
     document.getElementById('f-resultado').value = 'pendente';
+    document.getElementById('f-obs').value = '';
   }
   calcRetorno();
   document.getElementById('modal-aposta').classList.add('open');
@@ -985,12 +645,11 @@ function calcRetorno() {
   const val = parseFloat(document.getElementById('f-valor').value) || 0;
   const odd = parseFloat(document.getElementById('f-odd').value) || 0;
   const preview = document.getElementById('retorno-preview');
-  if (val && odd) {
-    preview.textContent = `Retorno: ${fmtMoeda(val*odd)} • Lucro: ${fmtMoeda(val*odd-val)}`;
-  } else preview.textContent = '';
+  if (val && odd) preview.textContent = `Retorno: ${fmtMoeda(val*odd)} • Lucro: ${fmtMoeda(val*odd-val)}`;
+  else preview.textContent = '';
 }
 
-function salvarAposta() {
+async function salvarAposta() {
   const data = document.getElementById('f-data').value;
   const tipo = document.getElementById('f-tipo').value;
   const desc = document.getElementById('f-desc').value.trim();
@@ -1000,9 +659,7 @@ function salvarAposta() {
   const odd = parseFloat(document.getElementById('f-odd').value);
   const resultado = document.getElementById('f-resultado').value;
   const obs = document.getElementById('f-obs').value.trim();
-
   if (!data || !valor || !odd) { alert('Preencha pelo menos data, valor e odd.'); return; }
-
   if (editingId) {
     const idx = state.apostas.findIndex(a => a.id === editingId);
     const old = state.apostas[idx];
@@ -1021,20 +678,19 @@ function salvarAposta() {
       state.movBanca.push({ id, data, tipo: 'aposta', desc: desc || 'Aposta', valor: lucro });
     }
   }
-
-  saveState();
+  await saveState();
   closeModal();
   renderApostas();
 }
 
-function deletarAposta(id) {
+async function deletarAposta(id) {
   if (!confirm('Excluir esta aposta?')) return;
   const a = state.apostas.find(x => x.id === id);
   if (a.resultado === 'ganhou') state.banca -= (a.valor * a.odd - a.valor);
   else if (a.resultado === 'perdeu') state.banca += a.valor;
   state.apostas = state.apostas.filter(x => x.id !== id);
   state.movBanca = state.movBanca.filter(x => x.id !== id);
-  saveState();
+  await saveState();
   renderApostas();
 }
 
@@ -1054,12 +710,11 @@ function openBancaModal(tipo) {
 
 function closeBancaModal() { document.getElementById('modal-banca').classList.remove('open'); }
 
-function salvarMovBanca() {
+async function salvarMovBanca() {
   const valor = parseFloat(document.getElementById('banca-valor-input').value);
   const desc = document.getElementById('banca-desc-input').value.trim();
   if (!valor || valor <= 0) { alert('Informe um valor válido.'); return; }
   const data = new Date().toISOString().slice(0,10);
-
   if (bancaModalTipo === 'inicial') {
     state.bancaInicial = valor; state.banca = valor;
     state.movBanca.unshift({ id: Date.now(), data, tipo: 'inicial', desc: 'Banca inicial', valor });
@@ -1070,8 +725,7 @@ function salvarMovBanca() {
     state.banca -= valor;
     state.movBanca.push({ id: Date.now(), data, tipo: 'retirada', desc: desc || 'Retirada', valor: -valor });
   }
-
-  saveState();
+  await saveState();
   closeBancaModal();
   renderBanca();
 }
@@ -1084,7 +738,7 @@ function renderBanca() {
     tl.innerHTML = `<div class="empty"><div class="empty-icon">💰</div><p>Nenhuma movimentação ainda.<br>Defina sua banca inicial para começar.</p></div>`;
     return;
   }
-  const icons = { deposito:'⬆️', retirada:'⬇️', inicial:'🏦', aposta: null };
+  const icons = { deposito:'⬆️', retirada:'⬇️', inicial:'🏦' };
   tl.innerHTML = movs.map(m => {
     const isPos = m.valor >= 0;
     const icon = m.tipo === 'aposta' ? (isPos ? '✅' : '❌') : (icons[m.tipo] || '');
@@ -1099,8 +753,9 @@ function renderBanca() {
 // ===================== INIT =====================
 const s = document.createElement('script');
 s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
-s.onload = () => {
-  loadState();
+s.onload = async () => {
+  loadLocal();
+  if (SUPA_URL && SUPA_KEY) await pullData(false);
   renderDashboard();
   renderBanca();
 };
