@@ -103,9 +103,69 @@
   .connected-box h3{color:var(--green);font-size:14px;margin-bottom:12px;}
   ::-webkit-scrollbar{width:6px;height:6px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
   @media(max-width:768px){
-    .kpi-grid{grid-template-columns:1fr 1fr;}.charts-row{grid-template-columns:1fr;}.form-grid{grid-template-columns:1fr;}
-    main{padding:16px;}header{padding:14px 16px;flex-wrap:wrap;gap:10px;}
-    .banca-valor{font-size:30px;}.kpi-value{font-size:20px;}nav{order:3;width:100%;}
+    /* HEADER */
+    header{padding:12px 16px;flex-wrap:wrap;gap:8px;}
+    .logo{font-size:14px;}
+    .header-right{order:2;margin-left:auto;}
+    nav{order:3;width:100%;justify-content:space-between;border-top:1px solid var(--border);padding-top:8px;margin-top:4px;}
+    .nav-btn{flex:1;text-align:center;padding:8px 4px;font-size:12px;}
+
+    /* MAIN */
+    main{padding:14px;}
+
+    /* KPIs - 2 colunas no mobile */
+    .kpi-grid{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+    .kpi{padding:14px;}
+    .kpi-value{font-size:20px;}
+    .kpi-label{font-size:10px;}
+    .kpi-sub{font-size:10px;}
+
+    /* CHARTS */
+    .charts-row{grid-template-columns:1fr;gap:12px;margin-bottom:16px;}
+
+    /* BANCA */
+    .banca-valor{font-size:28px;}
+    .banca-header{margin-bottom:16px;}
+
+    /* TIMELINE */
+    .timeline-item{grid-template-columns:80px 1fr auto;gap:8px;padding:10px 0;}
+    .timeline-desc{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+    /* TABELA - scroll horizontal */
+    .card{padding:14px;overflow-x:auto;}
+    table{min-width:500px;}
+    thead th{padding:8px 10px;font-size:10px;}
+    tbody td{padding:10px 10px;font-size:12px;}
+
+    /* FILTROS */
+    .filters{gap:8px;}
+    .filter-select{min-width:100px;font-size:11px;}
+
+    /* FORM */
+    .form-grid{grid-template-columns:1fr;}
+    .modal{padding:20px;margin:12px;}
+    .modal-overlay{align-items:flex-end;}
+    .modal{border-radius:12px 12px 0 0;max-height:92vh;}
+
+    /* BOTÕES BANCA */
+    .banca-header + div{flex-wrap:wrap;}
+    .banca-header + div .btn{font-size:12px;padding:8px 12px;}
+
+    /* SECTION HEADER */
+    .section-header{flex-wrap:wrap;gap:8px;}
+
+    /* SETUP */
+    .setup-hero{padding:24px 0 20px;}
+    .setup-hero h1{font-size:20px;}
+    .connected-box{padding:16px;}
+    .connected-box > div{flex-wrap:wrap;}
+  }
+
+  @media(max-width:400px){
+    .kpi-grid{grid-template-columns:1fr 1fr;gap:8px;}
+    .kpi-value{font-size:17px;}
+    .kpi{padding:12px;}
+    nav .nav-btn{font-size:11px;padding:7px 2px;}
   }
 </style>
 </head>
