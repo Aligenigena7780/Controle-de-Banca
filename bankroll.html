@@ -508,6 +508,19 @@ function fmtData(d) {
 // ===================== DASHBOARD =====================
 let chartBanca = null, chartTipo = null;
 
+function calcBancaReal() {
+  // Recalcula banca do zero a partir da inicial + movimentações manuais + apostas encerradas
+  let banca = state.bancaInicial;
+  const movManuais = state.movBanca.filter(m => m.tipo !== 'aposta');
+  for (const m of movManuais) banca += m.valor;
+  const enc = state.apostas.filter(a => a.resultado !== 'pendente');
+  for (const a of enc) {
+    if (a.resultado === 'ganhou') banca += (a.valor * a.odd) - a.valor;
+    else if (a.resultado === 'perdeu') banca -= a.valor;
+  }
+  return parseFloat(banca.toFixed(2));
+}
+
 function renderDashboard() {
   const enc = state.apostas.filter(a => a.resultado !== 'pendente');
   const ganhas = enc.filter(a => a.resultado === 'ganhou');
@@ -517,7 +530,9 @@ function renderDashboard() {
   const roi = totalInv > 0 ? (lucro / totalInv) * 100 : 0;
   const acerto = enc.length > 0 ? (ganhas.length / enc.length) * 100 : 0;
 
-  document.getElementById('kpi-banca').textContent = fmtMoeda(state.banca);
+  const bancaReal = calcBancaReal();
+  state.banca = bancaReal;
+  document.getElementById('kpi-banca').textContent = fmtMoeda(bancaReal);
   document.getElementById('kpi-banca-sub').textContent = 'Banca inicial: ' + fmtMoeda(state.bancaInicial);
   const kpiLucro = document.getElementById('kpi-lucro');
   kpiLucro.textContent = fmtMoeda(lucro);
@@ -731,6 +746,7 @@ async function salvarMovBanca() {
 }
 
 function renderBanca() {
+  state.banca = calcBancaReal();
   document.getElementById('banca-display').textContent = fmtMoeda(state.banca);
   const movs = [...state.movBanca].reverse();
   const tl = document.getElementById('banca-timeline');
