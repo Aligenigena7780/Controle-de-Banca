@@ -439,14 +439,18 @@
               <p>Copie o código e cole no editor do Apps Script. Depois clique em <strong style="color:var(--text)">Salvar (Ctrl+S)</strong>.</p>
               <div class="code-block" id="gas-code">const SHEET_NAME = 'Bankroll';
 
+function salvarDados(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
+  sheet.clearContents();
+  sheet.getRange(1, 1).setValue(JSON.stringify(data));
+}
+
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let sheet = ss.getSheetByName(SHEET_NAME);
-    if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
-    sheet.clearContents();
-    sheet.getRange(1, 1).setValue(JSON.stringify(data));
+    salvarDados(data);
     return ContentService
       .createTextOutput(JSON.stringify({ ok: true }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -459,6 +463,15 @@ function doPost(e) {
 
 function doGet(e) {
   try {
+    // Suporte a GET com payload (fallback para CORS)
+    if (e.parameter && e.parameter.action === 'save' && e.parameter.payload) {
+      const data = JSON.parse(decodeURIComponent(e.parameter.payload));
+      salvarDados(data);
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    // Leitura normal
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(SHEET_NAME);
     if (!sheet || sheet.getLastRow() === 0) {
@@ -632,20 +645,39 @@ function updateSyncStatus(s, label) {
   else { lbl.textContent = scriptUrl ? 'conectado' : 'local'; }
 }
 
+async function gasRequest(url, method, body) {
+  const opts = {
+    method: method || 'GET',
+    redirect: 'follow',
+    mode: 'cors',
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  const text = await res.text();
+  // O Google às vezes retorna HTML de redirecionamento em vez de JSON
+  if (text.trim().startsWith('<')) throw new Error('redirect_html');
+  return JSON.parse(text);
+}
+
 async function pushData() {
   if (!scriptUrl) return;
   updateSyncStatus('syncing');
   try {
-    const res = await fetch(scriptUrl, {
-      method: 'POST',
-      body: JSON.stringify(state),
-      headers: { 'Content-Type': 'text/plain' }
-    });
-    const json = await res.json();
-    if (json.ok) updateSyncStatus('ok', 'enviado');
-    else throw new Error(json.error);
+    // POST direto pode falhar por CORS preflight; usamos GET com dados codificados como fallback
+    let json;
+    try {
+      json = await gasRequest(scriptUrl, 'POST', state);
+    } catch(e) {
+      // Fallback: envia via GET com payload em query string (limitado mas funciona)
+      const encoded = encodeURIComponent(JSON.stringify(state));
+      const res = await fetch(`${scriptUrl}?action=save&payload=${encoded}`, { redirect: 'follow' });
+      const text = await res.text();
+      json = text.trim().startsWith('<') ? { ok: false } : JSON.parse(text);
+    }
+    if (json && json.ok) updateSyncStatus('ok', 'enviado');
+    else throw new Error('falha no envio');
   } catch(e) {
-    updateSyncStatus('err', 'falha');
+    updateSyncStatus('err', 'falha envio');
   }
 }
 
@@ -653,8 +685,10 @@ async function pullData() {
   if (!scriptUrl) return;
   updateSyncStatus('syncing');
   try {
-    const res = await fetch(scriptUrl);
-    const json = await res.json();
+    const res = await fetch(scriptUrl, { redirect: 'follow', mode: 'cors' });
+    const text = await res.text();
+    if (text.trim().startsWith('<')) throw new Error('html_response');
+    const json = JSON.parse(text);
     if (json.ok && json.data) {
       state = json.data;
       localStorage.setItem('bankroll_v3', JSON.stringify(state));
@@ -665,11 +699,11 @@ async function pullData() {
       showSyncResult('✅ Dados baixados do Google com sucesso.', 'success');
     } else {
       updateSyncStatus('ok', 'vazio');
-      showSyncResult('ℹ️ Nenhum dado encontrado no Google ainda.', 'info');
+      showSyncResult('ℹ️ Nenhum dado no Google ainda. Seus dados locais serão enviados.', 'info');
     }
   } catch(e) {
     updateSyncStatus('err', 'falha');
-    showSyncResult('❌ Erro ao conectar. Verifique a URL.', 'error');
+    showSyncResult('❌ Erro ao conectar. Verifique a URL e tente novamente.', 'error');
   }
 }
 
@@ -712,21 +746,24 @@ async function salvarUrl() {
   scriptUrl = url;
   localStorage.setItem('bankroll_script_url', url);
   try {
-    const res = await fetch(url);
-    const json = await res.json();
+    const res = await fetch(url, { redirect: 'follow', mode: 'cors' });
+    const text = await res.text();
+    if (text.trim().startsWith('<')) throw new Error('html_redirect');
+    const json = JSON.parse(text);
     if (json.ok) {
-      alertEl.innerHTML = '<div class="alert success">✅ Conectado com sucesso!</div>';
       document.getElementById('sync-actions-card').style.display = 'block';
       document.getElementById('sync-url-display').textContent = url;
       updateSyncStatus('ok', 'conectado');
       if (json.data) {
         state = json.data;
         localStorage.setItem('bankroll_v3', JSON.stringify(state));
-        alertEl.innerHTML = '<div class="alert success">✅ Conectado e dados carregados do Google!</div>';
+        alertEl.innerHTML = '<div class="alert success">✅ Conectado! Dados carregados do Google.</div>';
+        renderDashboard(); renderApostas(); renderBanca();
       } else {
+        alertEl.innerHTML = '<div class="alert success">✅ Conectado com sucesso!</div>';
         await pushData();
       }
-    } else throw new Error(json.error);
+    } else throw new Error(json.error || 'erro desconhecido');
   } catch(e) {
     alertEl.innerHTML = '<div class="alert error">❌ Não foi possível conectar. Verifique se a URL está correta e se o acesso está definido como "Qualquer pessoa".</div>';
     scriptUrl = '';
