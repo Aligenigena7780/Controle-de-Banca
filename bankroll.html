@@ -330,7 +330,7 @@
 let SUPA_URL = '';
 let SUPA_KEY = '';
 const TABLE = 'Controle%20de%20Banca';
-const ROW_ID = 1;
+// ROW_ID removido - busca dinâmica
 
 function supaHeaders() {
   return {
@@ -388,14 +388,29 @@ async function pushData(feedback = true) {
   if (!SUPA_URL || !SUPA_KEY) return;
   if (feedback) updateSyncStatus('syncing');
   try {
-    const payload = { id: ROW_ID, data: JSON.stringify(state) };
-    // upsert
-    const res = await fetch(`${SUPA_URL}/rest/v1/${TABLE}?on_conflict=id`, {
-      method: 'POST',
-      headers: { ...supaHeaders(), 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify(payload)
+    // Verifica se já existe linha na tabela
+    const checkRes = await fetch(`${SUPA_URL}/rest/v1/${TABLE}?select=id&limit=1`, {
+      headers: supaHeaders()
     });
-    if (res.ok || res.status === 201 || res.status === 200) {
+    if (!checkRes.ok) throw new Error('HTTP ' + checkRes.status);
+    const rows = await checkRes.json();
+    let res;
+    if (rows && rows.length > 0) {
+      // UPDATE na linha existente
+      res = await fetch(`${SUPA_URL}/rest/v1/${TABLE}?id=eq.${rows[0].id}`, {
+        method: 'PATCH',
+        headers: { ...supaHeaders(), 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ data: JSON.stringify(state) })
+      });
+    } else {
+      // INSERT primeira vez
+      res = await fetch(`${SUPA_URL}/rest/v1/${TABLE}`, {
+        method: 'POST',
+        headers: { ...supaHeaders(), 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ data: JSON.stringify(state) })
+      });
+    }
+    if (res.ok || res.status === 204 || res.status === 201 || res.status === 200) {
       updateSyncStatus('ok', 'salvo');
       if (feedback) showSyncResult('✅ Dados enviados ao Supabase.', 'success');
     } else {
@@ -412,7 +427,7 @@ async function pullData(feedback = true) {
   if (!SUPA_URL || !SUPA_KEY) return;
   updateSyncStatus('syncing');
   try {
-    const res = await fetch(`${SUPA_URL}/rest/v1/${TABLE}?id=eq.${ROW_ID}&select=data`, {
+    const res = await fetch(`${SUPA_URL}/rest/v1/${TABLE}?select=id,data&limit=1`, {
       headers: supaHeaders()
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -425,7 +440,7 @@ async function pullData(feedback = true) {
       if (feedback) showSyncResult('✅ Dados carregados do Supabase.', 'success');
     } else {
       updateSyncStatus('ok', 'conectado');
-      if (feedback) showSyncResult('ℹ️ Nenhum dado no Supabase ainda. Seus dados locais serão enviados.', 'info');
+      if (feedback) showSyncResult('ℹ️ Nenhum dado no Supabase ainda. Enviando dados locais…', 'info');
       await pushData(false);
     }
   } catch(e) {
@@ -771,9 +786,12 @@ const s = document.createElement('script');
 s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
 s.onload = async () => {
   loadLocal();
-  if (SUPA_URL && SUPA_KEY) await pullData(false);
   renderDashboard();
   renderBanca();
+  // Sync em background após render inicial
+  if (SUPA_URL && SUPA_KEY) {
+    try { await pullData(false); } catch(e) { updateSyncStatus('err', 'falha'); }
+  }
 };
 document.head.appendChild(s);
 
