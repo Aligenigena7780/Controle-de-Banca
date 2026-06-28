@@ -463,7 +463,7 @@ async function conectarSupabase() {
   if (!url || !key) { alertEl.innerHTML = '<div class="alert error">Preencha os dois campos.</div>'; return; }
   alertEl.innerHTML = '<div class="alert info">Testando conexão…</div>';
   try {
-    const res = await fetch(`${url}/rest/v1/${TABLE}?id=eq.${ROW_ID}&select=id`, {
+    const res = await fetch(`${url}/rest/v1/${TABLE}?select=id&limit=1`, {
       headers: {
         'apikey': key,
         'Authorization': 'Bearer ' + key
