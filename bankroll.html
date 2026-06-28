@@ -405,7 +405,10 @@ let state = { banca: 0, bancaInicial: 0, apostas: [], movBanca: [] };
 
 function loadLocal() {
   const raw = localStorage.getItem('bankroll_v4');
-  if (raw) state = JSON.parse(raw);
+  if (raw) {
+    state = JSON.parse(raw);
+    state.banca = calcBancaReal(); // sempre recalcula ao carregar
+  }
   SUPA_URL = localStorage.getItem('supa_url') || '';
   SUPA_KEY = localStorage.getItem('supa_key') || '';
   if (SUPA_URL && SUPA_KEY) {
@@ -494,6 +497,7 @@ async function pullData(feedback = true) {
     const rows = await res.json();
     if (rows && rows.length > 0 && rows[0].data) {
       state = JSON.parse(rows[0].data);
+      state.banca = calcBancaReal(); // sempre recalcula, ignora valor salvo
       saveLocal();
       updateSyncStatus('ok', 'atualizado');
       renderDashboard(); renderApostas(); renderBanca();
